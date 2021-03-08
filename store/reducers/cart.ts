@@ -1,9 +1,19 @@
 import { CartItem } from "../../models/cart-item";
 import { Product } from "../../models/product";
-import { ADD_TO_CART } from "../actions/cart";
+import { ADD_TO_CART, REMOVE_FROM_CART } from "../actions/cart";
+
+
+export type CartItemProps = {
+  [id: string] : {
+    quantity: number,
+    productPrice: number,
+    productTitle: string,
+    sum: number
+  }
+}
 
 export type CartStateProps = {
-  items: any;
+  items: CartItemProps;
   totalAmount: number;
 };
 
@@ -40,6 +50,30 @@ export default (
         totalAmount: state.totalAmount + prodPrice,
       };
 
+      case REMOVE_FROM_CART:
+        const productId = action.payload.pid;
+        const selectedProduct = state.items[productId];
+        const currentQuantity = selectedProduct.quantity;
+        let updatedCartItems;
+        if(currentQuantity > 1) {
+          const updatedCartItem = new CartItem(
+            selectedProduct.quantity - 1, 
+            selectedProduct.productPrice, 
+            selectedProduct.productTitle, 
+            selectedProduct.sum - selectedProduct.productPrice
+          );
+          updatedCartItems = {...state.items, [productId]: updatedCartItem }
+        } else {
+          updatedCartItems = { ...state.items };
+          delete updatedCartItems[productId];
+        }
+
+        return {
+          ...state,
+          items: updatedCartItems,
+          totalAmount: state.totalAmount - selectedProduct.productPrice
+        }
+        
     default:
       return state;
   }
